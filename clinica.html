@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Clínica — Estoque</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg: #f4f6fa;
+  --surface: #ffffff;
+  --surface2: #f0f2f8;
+  --border: #e2e6f0;
+  --accent: #3b6fd4;
+  --accent-dim: rgba(59,111,212,0.10);
+  --danger: #d94f4f;
+  --danger-dim: rgba(217,79,79,0.10);
+  --success: #2e9e6b;
+  --warning: #d97706;
+  --warning-dim: rgba(217,119,6,0.12);
+  --med: #6b4fc4;
+  --med-dim: rgba(107,79,196,0.10);
+  --sup: #0e7fa8;
+  --sup-dim: rgba(14,127,168,0.10);
+  --text: #1a1e2e;
+  --text-muted: #7880a0;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 2px 12px rgba(30,40,80,0.07);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100dvh;
+  padding-bottom: calc(80px + env(safe-area-inset-bottom));
+}
+
+/* ── TELAS ── */
+.tela { display: none; }
+.tela.ativa { display: block; }
+
+/* ── HEADER ── */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 18px 12px;
+  position: sticky; top: 0; z-index: 10;
+  box-shadow: var(--shadow);
+}
+.header-row { display: flex; align-items: center; gap: 10px; }
+.btn-back {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--surface2); border: none; cursor: pointer;
+  font-size: 1.1rem; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.btn-back:active { background: var(--border); }
+header h1 { font-size: 1.05rem; font-weight: 700; letter-spacing: -0.01em; flex: 1; }
+header p  { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; padding-left: 44px; }
+
+/* ── SEARCH ── */
+.search-wrap { padding: 12px 16px 4px; }
+.search-wrap input {
+  width: 100%; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text); font-size: 0.95rem; padding: 11px 14px;
+  outline: none; font-family: inherit; box-shadow: var(--shadow);
+}
+.search-wrap input:focus { border-color: var(--accent); }
+.search-wrap input::placeholder { color: var(--text-muted); }
+
+/* ── LISTA PACIENTES ── */
+.list { padding: 10px 16px; display: flex; flex-direction: column; gap: 10px; }
+
+.empty { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+.empty .icon { font-size: 2.4rem; margin-bottom: 10px; }
+.empty p { font-size: 0.88rem; line-height: 1.5; }
+
+.paciente-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex; align-items: center; gap: 14px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  animation: fadeIn .2s ease;
+  position: relative;
+}
+.paciente-card:active { background: var(--surface2); }
+@keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+
+.avatar {
+  width: 46px; height: 46px; border-radius: 50%;
+  background: var(--accent-dim);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem; flex-shrink: 0;
+  color: var(--accent); font-weight: 700;
+}
+.pac-info { flex: 1; min-width: 0; }
+.pac-nome { font-weight: 700; font-size: 0.97rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pac-quarto { font-size: 0.75rem; color: var(--text-muted); margin-top: 3px; }
+.pac-stats { display: flex; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+.pill {
+  font-size: 0.65rem; font-weight: 600; padding: 2px 8px;
+  border-radius: 20px; white-space: nowrap;
+}
+.pill-med { background: var(--med-dim); color: var(--med); }
+.pill-sup { background: var(--sup-dim); color: var(--sup); }
+.pill-alerta { background: var(--warning-dim); color: var(--warning); }
+
+.pac-arrow { color: var(--text-muted); font-size: 1rem; flex-shrink: 0; }
+
+.pac-actions { display: flex; gap: 6px; }
+.btn-icon {
+  width: 32px; height: 32px; border-radius: 8px; border: none;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 0.95rem;
+}
+.btn-edit { background: var(--accent-dim); color: var(--accent); }
+.btn-del  { background: var(--danger-dim); color: var(--danger); }
+.btn-edit:active { background: var(--accent); color: #fff; }
+.btn-del:active  { background: var(--danger); color: #fff; }
+
+/* ── TELA PACIENTE ── */
+.tabs {
+  display: flex; background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px;
+}
+.tab {
+  flex: 1; padding: 12px 0; font-size: 0.82rem; font-weight: 600;
+  border: none; background: none; cursor: pointer;
+  color: var(--text-muted); border-bottom: 2px solid transparent;
+  font-family: inherit; transition: color .15s;
+}
+.tab.ativa { color: var(--accent); border-bottom-color: var(--accent); }
+
+.alerta-banner {
+  margin: 10px 16px 0;
+  background: var(--warning-dim); border: 1px solid var(--warning);
+  border-radius: var(--radius-sm); padding: 10px 14px;
+  font-size: 0.8rem; color: var(--warning); font-weight: 600;
+  display: none; align-items: center; gap: 8px;
+}
+.alerta-banner.show { display: flex; }
+
+/* ── CARDS DE ITEM ── */
+.item-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 13px 14px;
+  display: flex; align-items: center; gap: 12px;
+  box-shadow: var(--shadow); animation: fadeIn .2s ease;
+}
+.item-card.alerta { border-color: var(--warning); }
+.item-card.alerta .item-icon { background: var(--warning-dim); }
+.item-card.alerta .qty-num { color: var(--warning); }
+
+.item-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; flex-shrink: 0;
+}
+.item-icon.med { background: var(--med-dim); }
+.item-icon.sup { background: var(--sup-dim); }
+
+.item-info { flex: 1; min-width: 0; }
+.item-nome { font-weight: 600; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item-sub  { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+.badge-min {
+  display: inline-block; background: var(--warning-dim); color: var(--warning);
+  font-size: 0.6rem; font-weight: 700; padding: 2px 7px;
+  border-radius: 20px; margin-top: 4px;
+}
+
+.card-qty { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+.qty-btn {
+  width: 30px; height: 30px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--text); font-size: 1.1rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.qty-btn:active { background: var(--accent-dim); }
+.qty-num { font-size: 1rem; font-weight: 700; min-width: 24px; text-align: center; }
+
+/* ── FAB ── */
+.fab {
+  position: fixed;
+  bottom: calc(20px + env(safe-area-inset-bottom)); right: 20px;
+  width: 56px; height: 56px; border-radius: 50%;
+  background: var(--accent); color: #fff; font-size: 1.5rem;
+  border: none; cursor: pointer;
+  box-shadow: 0 4px 18px rgba(59,111,212,0.35);
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .15s; z-index: 20;
+}
+.fab:active { transform: scale(.92); }
+
+/* ── MODAL ── */
+.overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.45); z-index: 30;
+  align-items: flex-end; justify-content: center;
+}
+.overlay.open { display: flex; }
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 22px 20px calc(22px + env(safe-area-inset-bottom));
+  width: 100%; max-width: 480px;
+  animation: slideUp .25s ease;
+}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: none; } }
+
+.modal h2 { font-size: 1rem; font-weight: 700; margin-bottom: 18px; }
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 0.72rem; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .05em; }
+.field input, .field select {
+  width: 100%; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text); font-size: 1rem; padding: 12px 14px;
+  outline: none; font-family: inherit; appearance: none;
+}
+.field input:focus, .field select:focus { border-color: var(--accent); }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.modal-btns { display: flex; gap: 10px; margin-top: 18px; }
+.btn { flex: 1; padding: 14px; border-radius: var(--radius-sm); font-size: .95rem; font-weight: 600; font-family: inherit; border: none; cursor: pointer; }
+.btn:active { opacity: .8; }
+.btn-primary   { background: var(--accent); color: #fff; }
+.btn-secondary { background: var(--surface2); color: var(--text); }
+.error-msg { color: var(--danger); font-size: .78rem; margin-top: 8px; display: none; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: calc(86px + env(safe-area-inset-bottom));
+  left: 50%; transform: translateX(-50%);
+  background: #1a1e2e; color: #fff;
+  padding: 10px 20px; border-radius: 30px;
+  font-size: .83rem; font-weight: 600; z-index: 50;
+  opacity: 0; transition: opacity .2s; pointer-events: none; white-space: nowrap;
+}
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ TELA 1: LISTA DE PACIENTES ══════════════ -->
+<div class="tela ativa" id="tela-pacientes">
+  <header>
+    <div class="header-row">
+      <h1>🏥 Clínica — Estoque</h1>
+    </div>
+    <p id="header-resumo">Carregando...</p>
+  </header>
+
+  <div class="search-wrap">
+    <input type="search" id="busca-pac" placeholder="🔍  Buscar paciente ou quarto..." oninput="renderPacientes()">
+  </div>
+
+  <div class="list" id="lista-pacientes"></div>
+
+  <button class="fab" onclick="abrirModalPaciente()">+</button>
+</div>
+
+<!-- ══════════════ TELA 2: PACIENTE ══════════════ -->
+<div class="tela" id="tela-paciente">
+  <header>
+    <div class="header-row">
+      <button class="btn-back" onclick="voltarPacientes()">←</button>
+      <div style="flex:1; min-width:0;">
+        <h1 id="pac-header-nome" style="padding-left:0">—</h1>
+      </div>
+      <div class="pac-actions">
+        <button class="btn-icon btn-edit" onclick="editarPacienteAtual()">✏️</button>
+        <button class="btn-icon btn-del" onclick="deletarPacienteAtual()">🗑️</button>
+      </div>
+    </div>
+    <p id="pac-header-sub"></p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab ativa" id="tab-med" onclick="mudarTab('med')">💊 Medicamentos</button>
+    <button class="tab" id="tab-sup" onclick="mudarTab('sup')">🧴 Suprimentos</button>
+  </div>
+
+  <div class="alerta-banner" id="alerta-banner">⚠️ <span id="alerta-texto"></span></div>
+  <div class="list" id="lista-itens"></div>
+
+  <button class="fab" onclick="abrirModalItem()">+</button>
+</div>
+
+<!-- ══════════════ MODAL PACIENTE ══════════════ -->
+<div class="overlay" id="overlay-pac" onclick="fecharOverlay('overlay-pac', event)">
+  <div class="modal">
+    <h2 id="modal-pac-titulo">Novo paciente</h2>
+    <div class="field">
+      <label>Nome completo</label>
+      <input type="text" id="inp-pac-nome" placeholder="Ex: Maria da Silva" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>Quarto / Leito</label>
+      <input type="text" id="inp-pac-quarto" placeholder="Ex: 12A">
+    </div>
+    <div class="error-msg" id="err-pac">Preencha todos os campos.</div>
+    <div class="modal-btns">
+      <button class="btn btn-secondary" onclick="fecharOverlay('overlay-pac')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarPaciente()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ MODAL ITEM ══════════════ -->
+<div class="overlay" id="overlay-item" onclick="fecharOverlay('overlay-item', event)">
+  <div class="modal">
+    <h2 id="modal-item-titulo">Novo item</h2>
+    <div class="field">
+      <label>Categoria</label>
+      <select id="inp-cat">
+        <option value="med">💊 Medicamento</option>
+        <option value="sup">🧴 Suprimento / Material</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Nome</label>
+      <input type="text" id="inp-item-nome" placeholder="Ex: Paracetamol 500mg" autocomplete="off">
+    </div>
+    <div class="field" id="field-dose">
+      <label>Dose / Observação (opcional)</label>
+      <input type="text" id="inp-dose" placeholder="Ex: 500mg — 1 comp. 3x ao dia">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Quantidade</label>
+        <input type="number" id="inp-item-qtd" placeholder="0" min="0" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label>Mínimo (alerta)</label>
+        <input type="number" id="inp-item-min" placeholder="0" min="0" inputmode="numeric">
+      </div>
+    </div>
+    <div class="error-msg" id="err-item">Preencha nome e quantidade.</div>
+    <div class="modal-btns">
+      <button class="btn btn-secondary" onclick="fecharOverlay('overlay-item')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarItem()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── ESTADO ──
+const CHAVE = 'clinica_v1';
+let dados = { pacientes: {} }; // { id: { nome, quarto, itens: { id: {cat,nome,dose,qtd,min} } } }
+let pacAtual = null;
+let tabAtual = 'med';
+let editandoPac = null;
+let editandoItem = null;
+
+// ── PERSISTÊNCIA ──
+function carregar() {
+  const r = localStorage.getItem(CHAVE);
+  if (r) dados = JSON.parse(r);
+}
+function salvar() {
+  localStorage.setItem(CHAVE, JSON.stringify(dados));
+}
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+// ── NAVEGAÇÃO ──
+function irTela(id) {
+  document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
+  document.getElementById(id).classList.add('ativa');
+  window.scrollTo(0,0);
+}
+
+function voltarPacientes() {
+  pacAtual = null;
+  irTela('tela-pacientes');
+  renderPacientes();
+}
+
+function mudarTab(tab) {
+  tabAtual = tab;
+  document.getElementById('tab-med').classList.toggle('ativa', tab==='med');
+  document.getElementById('tab-sup').classList.toggle('ativa', tab==='sup');
+  renderItens();
+}
+
+// ── TELA PACIENTES ──
+function iniciais(nome) {
+  return nome.trim().split(' ').slice(0,2).map(p=>p[0].toUpperCase()).join('');
+}
+
+function renderPacientes() {
+  const lista = document.getElementById('lista-pacientes');
+  const busca = document.getElementById('busca-pac').value.toLowerCase();
+  const pacs = Object.entries(dados.pacientes)
+    .filter(([,p]) => p.nome.toLowerCase().includes(busca) || p.quarto.toLowerCase().includes(busca))
+    .sort(([,a],[,b]) => a.nome.localeCompare(b.nome));
+
+  // resumo header
+  const total = Object.keys(dados.pacientes).length;
+  let alertaGlobal = 0;
+  Object.values(dados.pacientes).forEach(p => {
+    Object.values(p.itens||{}).forEach(it => {
+      if (it.min > 0 && it.qtd <= it.min) alertaGlobal++;
+    });
+  });
+  document.getElementById('header-resumo').textContent =
+    total === 0 ? 'Nenhum paciente cadastrado'
+    : `${total} paciente${total>1?'s':''} · ${alertaGlobal > 0 ? alertaGlobal+' alerta(s)' : 'sem alertas'}`;
+
+  if (pacs.length === 0) {
+    lista.innerHTML = `<div class="empty"><div class="icon">👴</div><p>${busca ? 'Nenhum paciente encontrado.' : 'Nenhum paciente cadastrado.<br>Toque em + para adicionar.'}</p></div>`;
+    return;
+  }
+
+  lista.innerHTML = pacs.map(([id, p]) => {
+    const itens = Object.values(p.itens||{});
+    const meds = itens.filter(i=>i.cat==='med').length;
+    const sups = itens.filter(i=>i.cat==='sup').length;
+    const alertas = itens.filter(i=>i.min>0 && i.qtd<=i.min).length;
+    return `
+      <div class="paciente-card" onclick="abrirPaciente('${id}')">
+        <div class="avatar">${iniciais(p.nome)}</div>
+        <div class="pac-info">
+          <div class="pac-nome">${p.nome}</div>
+          <div class="pac-quarto">🛏️ Quarto ${p.quarto}</div>
+          <div class="pac-stats">
+            ${meds > 0 ? `<span class="pill pill-med">💊 ${meds} med.</span>` : ''}
+            ${sups > 0 ? `<span class="pill pill-sup">🧴 ${sups} sup.</span>` : ''}
+            ${alertas > 0 ? `<span class="pill pill-alerta">⚠️ ${alertas} alerta</span>` : ''}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <div class="pac-actions" onclick="event.stopPropagation()">
+            <button class="btn-icon btn-edit" onclick="abrirEdicaoPaciente('${id}')">✏️</button>
+            <button class="btn-icon btn-del" onclick="deletarPaciente('${id}')">🗑️</button>
+          </div>
+          <span class="pac-arrow">›</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── ABRIR PACIENTE ──
+function abrirPaciente(id) {
+  pacAtual = id;
+  tabAtual = 'med';
+  const p = dados.pacientes[id];
+  document.getElementById('pac-header-nome').textContent = p.nome;
+  document.getElementById('pac-header-sub').textContent = '🛏️ Quarto ' + p.quarto;
+  document.getElementById('tab-med').classList.add('ativa');
+  document.getElementById('tab-sup').classList.remove('ativa');
+  irTela('tela-paciente');
+  renderItens();
+}
+
+// ── TELA ITENS ──
+function renderItens() {
+  if (!pacAtual) return;
+  const lista = document.getElementById('lista-itens');
+  const p = dados.pacientes[pacAtual];
+  const itens = Object.entries(p.itens||{}).filter(([,i])=>i.cat===tabAtual);
+
+  // banner alertas
+  const alertas = Object.values(p.itens||{}).filter(i=>i.min>0&&i.qtd<=i.min);
+  const banner = document.getElementById('alerta-banner');
+  if (alertas.length > 0) {
+    document.getElementById('alerta-texto').textContent =
+      alertas.length===1 ? `"${alertas[0].nome}" abaixo do mínimo`
+      : `${alertas.length} itens abaixo do estoque mínimo`;
+    banner.classList.add('show');
+  } else {
+    banner.classList.remove('show');
+  }
+
+  if (itens.length === 0) {
+    lista.innerHTML = `<div class="empty"><div class="icon">${tabAtual==='med'?'💊':'🧴'}</div><p>Nenhum ${tabAtual==='med'?'medicamento':'suprimento'} cadastrado.<br>Toque em + para adicionar.</p></div>`;
+    return;
+  }
+
+  lista.innerHTML = itens.sort(([,a],[,b])=>a.nome.localeCompare(b.nome)).map(([id,it])=>{
+    const emAlerta = it.min > 0 && it.qtd <= it.min;
+    const badgeMin = emAlerta ? `<div class="badge-min">⚠️ mín: ${it.min}</div>` : '';
+    const sub = it.dose ? it.dose : (tabAtual==='sup' ? 'Suprimento' : 'Medicamento');
+    return `
+      <div class="item-card${emAlerta?' alerta':''}">
+        <div class="item-icon ${it.cat}">${it.cat==='med'?'💊':'🧴'}</div>
+        <div class="item-info">
+          <div class="item-nome">${it.nome}</div>
+          <div class="item-sub">${sub}</div>
+          ${badgeMin}
+        </div>
+        <div class="card-qty">
+          <button class="qty-btn" onclick="ajustarItem('${id}',-1)">−</button>
+          <div class="qty-num">${it.qtd}</div>
+          <button class="qty-btn" onclick="ajustarItem('${id}',1)">+</button>
+        </div>
+        <div class="pac-actions">
+          <button class="btn-icon btn-edit" onclick="abrirEdicaoItem('${id}')">✏️</button>
+          <button class="btn-icon btn-del" onclick="deletarItem('${id}')">🗑️</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function ajustarItem(id, delta) {
+  const it = dados.pacientes[pacAtual].itens[id];
+  it.qtd = Math.max(0, it.qtd + delta);
+  salvar();
+  renderItens();
+}
+
+function deletarItem(id) {
+  const it = dados.pacientes[pacAtual].itens[id];
+  if (!confirm(`Remover "${it.nome}"?`)) return;
+  delete dados.pacientes[pacAtual].itens[id];
+  salvar();
+  renderItens();
+  toast('Item removido');
+}
+
+// ── MODAL PACIENTE ──
+function abrirModalPaciente() {
+  editandoPac = null;
+  document.getElementById('modal-pac-titulo').textContent = 'Novo paciente';
+  document.getElementById('inp-pac-nome').value = '';
+  document.getElementById('inp-pac-quarto').value = '';
+  document.getElementById('err-pac').style.display = 'none';
+  document.getElementById('overlay-pac').classList.add('open');
+  setTimeout(()=>document.getElementById('inp-pac-nome').focus(), 300);
+}
+
+function abrirEdicaoPaciente(id) {
+  editandoPac = id;
+  const p = dados.pacientes[id];
+  document.getElementById('modal-pac-titulo').textContent = 'Editar paciente';
+  document.getElementById('inp-pac-nome').value = p.nome;
+  document.getElementById('inp-pac-quarto').value = p.quarto;
+  document.getElementById('err-pac').style.display = 'none';
+  document.getElementById('overlay-pac').classList.add('open');
+}
+
+function editarPacienteAtual() { abrirEdicaoPaciente(pacAtual); }
+
+function salvarPaciente() {
+  const nome = document.getElementById('inp-pac-nome').value.trim();
+  const quarto = document.getElementById('inp-pac-quarto').value.trim();
+  if (!nome || !quarto) { document.getElementById('err-pac').style.display='block'; return; }
+  if (editandoPac) {
+    dados.pacientes[editandoPac].nome = nome;
+    dados.pacientes[editandoPac].quarto = quarto;
+    if (pacAtual === editandoPac) {
+      document.getElementById('pac-header-nome').textContent = nome;
+      document.getElementById('pac-header-sub').textContent = '🛏️ Quarto ' + quarto;
+    }
+  } else {
+    const id = uid();
+    dados.pacientes[id] = { nome, quarto, itens: {} };
+  }
+  salvar();
+  fecharOverlay('overlay-pac');
+  renderPacientes();
+  toast(editandoPac ? 'Paciente atualizado ✓' : 'Paciente adicionado ✓');
+}
+
+function deletarPaciente(id) {
+  const p = dados.pacientes[id];
+  if (!confirm(`Remover paciente "${p.nome}"?\nTodos os itens serão apagados.`)) return;
+  delete dados.pacientes[id];
+  salvar();
+  renderPacientes();
+  toast('Paciente removido');
+}
+
+function deletarPacienteAtual() { deletarPaciente(pacAtual); voltarPacientes(); }
+
+// ── MODAL ITEM ──
+function abrirModalItem() {
+  editandoItem = null;
+  document.getElementById('modal-item-titulo').textContent = 'Novo item';
+  document.getElementById('inp-cat').value = tabAtual;
+  document.getElementById('inp-item-nome').value = '';
+  document.getElementById('inp-dose').value = '';
+  document.getElementById('inp-item-qtd').value = '';
+  document.getElementById('inp-item-min').value = '';
+  document.getElementById('err-item').style.display = 'none';
+  toggleDose();
+  document.getElementById('overlay-item').classList.add('open');
+  setTimeout(()=>document.getElementById('inp-item-nome').focus(), 300);
+}
+
+function abrirEdicaoItem(id) {
+  editandoItem = id;
+  const it = dados.pacientes[pacAtual].itens[id];
+  document.getElementById('modal-item-titulo').textContent = 'Editar item';
+  document.getElementById('inp-cat').value = it.cat;
+  document.getElementById('inp-item-nome').value = it.nome;
+  document.getElementById('inp-dose').value = it.dose || '';
+  document.getElementById('inp-item-qtd').value = it.qtd;
+  document.getElementById('inp-item-min').value = it.min || '';
+  document.getElementById('err-item').style.display = 'none';
+  toggleDose();
+  document.getElementById('overlay-item').classList.add('open');
+}
+
+function toggleDose() {
+  const cat = document.getElementById('inp-cat').value;
+  document.getElementById('field-dose').style.display = cat==='med' ? 'block' : 'none';
+}
+document.getElementById('inp-cat').addEventListener('change', toggleDose);
+
+function salvarItem() {
+  const cat  = document.getElementById('inp-cat').value;
+  const nome = document.getElementById('inp-item-nome').value.trim();
+  const dose = document.getElementById('inp-dose').value.trim();
+  const qtd  = parseInt(document.getElementById('inp-item-qtd').value);
+  const minV = document.getElementById('inp-item-min').value;
+  const min  = minV==='' ? 0 : parseInt(minV);
+  if (!nome || isNaN(qtd) || qtd < 0) { document.getElementById('err-item').style.display='block'; return; }
+  const p = dados.pacientes[pacAtual];
+  if (!p.itens) p.itens = {};
+  const id = editandoItem || uid();
+  p.itens[id] = { cat, nome, dose, qtd, min: isNaN(min)?0:min };
+  salvar();
+  fecharOverlay('overlay-item');
+  if (!editandoItem && cat !== tabAtual) mudarTab(cat);
+  else renderItens();
+  toast(editandoItem ? 'Item atualizado ✓' : 'Item adicionado ✓');
+}
+
+// ── OVERLAY ──
+function fecharOverlay(id, e) {
+  if (e && e.target !== document.getElementById(id)) return;
+  document.getElementById(id).classList.remove('open');
+}
+
+// ── TOAST ──
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+// ── TECLADO ──
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape') {
+    ['overlay-pac','overlay-item'].forEach(id=>document.getElementById(id).classList.remove('open'));
+  }
+  if (e.key==='Enter') {
+    if (document.getElementById('overlay-pac').classList.contains('open')) salvarPaciente();
+    else if (document.getElementById('overlay-item').classList.contains('open')) salvarItem();
+  }
+});
+
+// ── INIT ──
+carregar();
+renderPacientes();
+</script>
+</body>
+</html>
